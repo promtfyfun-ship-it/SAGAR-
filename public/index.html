@@ -1,1 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Host BD | Management Panel</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <style>
+        /* ================= 🎨 THEME VARIABLES ================= */
+        :root {
+            --bg-color: #0b0e14;
+            --surface-color: #151a23;
+            --surface-hover: #1c2330;
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --glass: rgba(21, 26, 35, 0.7);
+            --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* ================= 🛠 RESET & GLOBAL ================= */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Space Grotesk', sans-serif; outline: none; }
+        
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ================= 🧩 COMPONENTS ================= */
+        .hidden { display: none !important; }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--primary-color), var(--primary-hover)); color: white; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5); }
+        
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger-color); border: 1px solid var(--danger-color); }
+        .btn-danger:hover { background: var(--danger-color); color: white; }
+        
+        .btn-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning-color); border: 1px solid var(--warning-color); }
+        .btn-warning:hover { background: var(--warning-color); color: black; }
+
+        .btn-sm { padding: 8px 16px; font-size: 0.85rem; }
+
+        /* Inputs */
+        input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: white;
+            transition: 0.3s;
+            margin-bottom: 15px;
+        }
+        input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+
+        /* Cards */
+        .card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        /* ================= 🧭 NAVBAR ================= */
+        .navbar {
+            padding: 1.2rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(11, 14, 20, 0.8);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+        .logo { font-size: 1.5rem; font-weight: 700; color: white; display: flex; align-items: center; gap: 10px; }
+        .logo i { color: var(--accent-color); }
+
+        /* ================= 🚪 AUTH PAGE ================= */
+        .auth-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .auth-box { width: 100%; max-width: 400px; text-align: center; animation: fadeIn 0.5s ease; }
+        .auth-icon { font-size: 3rem; color: var(--accent-color); margin-bottom: 20px; }
+
+        /* ================= 📊 DASHBOARD ================= */
+        .dashboard-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+            width: 100%;
+            animation: slideUp 0.5s ease;
+        }
+
+        .upload-section {
+            border: 2px dashed var(--border-color);
+            padding: 40px;
+            text-align: center;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            background: rgba(255,255,255,0.01);
+            margin-bottom: 40px;
+        }
+        .upload-section:hover { border-color: var(--primary-color); background: rgba(59, 130, 246, 0.05); }
+        .upload-icon { font-size: 3rem; color: var(--text-muted); margin-bottom: 15px; }
+
+        /* App List Grid */
+        .app-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        
+        .app-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .app-card:hover { transform: translateY(-3px); border-color: var(--primary-color); }
+        
+        .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .app-title { font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .app-icon-py { color: #FFD43B; font-size: 1.4rem; }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-running { background: rgba(16, 185, 129, 0.15); color: var(--accent-color); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-stopped { background: rgba(239, 68, 68, 0.15); color: var(--danger-color); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .control-panel { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .btn-ctrl { flex: 1; justify-content: center; min-width: 80px; }
+        
+        /* Runtime Display */
+        .runtime-display {
+            background: rgba(0,0,0,0.2);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .runtime-display strong { color: var(--primary-color); font-family: monospace; }
+
+        .terminal-container {
+            position: relative;
+            margin-top: 10px;
+        }
+        
+        .terminal {
+            background: #000;
+            color: #4ade80;
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #333;
+            white-space: pre-wrap;
+        }
+        .terminal::-webkit-scrollbar { width: 6px; }
+        .terminal::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: 0.2s;
+        }
+        .copy-btn:hover { background: var(--primary-color); }
+
+        /* ================= 🔔 NOTIFICATIONS ================= */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 1000; }
+        .toast {
+            background: var(--surface-color);
+            border-left: 4px solid var(--primary-color);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            display: flex; align-items: center; gap: 10px;
+            animation: slideInRight 0.3s ease;
+            min-width: 300px;
+        }
+        .toast.success { border-color: var(--accent-color); }
+        .toast.error { border-color: var(--danger-color); }
+
+        /* ================= ⏳ LOADER ================= */
+        .overlay-loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(11, 14, 20, 0.9);
+            z-index: 2000;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+        }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+    <!-- ⏳ GLOBAL LOADER -->
+    <div id="loader" class="overlay-loader hidden">
+        <div class="spinner"></div>
+        <h3 id="loader-msg">Connecting...</h3>
+    </div>
+
+    <!-- 🔔 TOAST CONTAINER -->
+    <div id="toast-container"></div>
+
+    <!-- 🧭 NAVBAR -->
+    <nav class="navbar hidden" id="navbar">
+        <div class="logo">
+            <i class="fa-solid fa-server"></i> Bot Host BD
+        </div>
+        <div class="user-info">
+            <button onclick="logout()" class="btn btn-danger btn-sm"><i class="fa-solid fa-lock"></i> Lock Panel</button>
+        </div>
+    </nav>
+
+    <!-- 🚪 AUTH SECTION (Password Only) -->
+    <div id="auth-section" class="auth-container">
+        <div class="card auth-box">
+            <div class="auth-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <h2 style="margin-bottom: 10px;">Secure Access</h2>
+            <p style="color: var(--text-muted); margin-bottom: 25px;">Enter password to manage your bots.</p>
+
+            <input type="password" id="password" placeholder="Enter Password">
+            
+            <button onclick="handleAuth()" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                <i class="fa-solid fa-unlock"></i> Unlock Dashboard
+            </button>
+        </div>
+    </div>
+
+    <!-- 📊 DASHBOARD SECTION -->
+    <div id="dashboard-section" class="dashboard-container hidden">
+        
+        <!-- Upload Area -->
+        <div class="upload-section" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+            <h3 style="margin-bottom: 10px;">Deploy New Bot</h3>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">
+                Supported: <strong>.zip</strong> or <strong>.py</strong>
+            </p>
+            <input type="file" id="fileInput" hidden accept=".zip,.py" onchange="fileSelected()">
+            
+            <div id="file-display" class="hidden">
+                <span id="file-name" style="color: var(--accent-color); font-weight: bold;">filename.zip</span>
+                <br><br>
+                <button onclick="uploadFile(event)" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-rocket"></i> Deploy
+                </button>
+            </div>
+        </div>
+
+        <!-- Apps List -->
+        <h3 style="margin-bottom: 20px; border-left: 4px solid var(--accent-color); padding-left: 10px;">
+            Active Projects
+        </h3>
+        <div id="app-list" class="app-grid">
+            <div style="text-align: center; color: var(--text-muted); padding: 20px;">
+                Loading...
+            </div>
+        </div>
+
+    </div>
+
+      <!-- 📜 JAVASCRIPT LOGIC -->
+    <script>
+        // =========================================================
+        // Single Deployment URL (Render serves both frontend & backend)
+        const API_BASE_URL = window.location.origin; 
+        const MASTER_PASSWORD = "s@go₹"; 
+        // =========================================================
+
+        let isUnlocked = false;
+        let appsData = {}; 
+
+        // --- 🛠 INIT ---
+        window.addEventListener('DOMContentLoaded', () => {
+            if (sessionStorage.getItem('bothost_unlocked')) {
+                isUnlocked = true;
+                showDashboard();
+            }
+        });
+
+        // --- 🎨 UI FUNCTIONS ---
+        function showLoader(show, msg="Processing...") {
+            const el = document.getElementById('loader');
+            if (show) {
+                document.getElementById('loader-msg').innerText = msg;
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        function showToast(msg, type='info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            let icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'exclamation-circle' : 'info-circle');
+            toast.innerHTML = `<i class="fa-solid fa-${icon}"></i> <span>${msg}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideInRight 0.3s reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function showDashboard() {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('dashboard-section').classList.remove('hidden');
+            document.getElementById('navbar').classList.remove('hidden');
+            loadApps();
+        }
+
+        function showAuth() {
+            document.getElementById('auth-section').classList.remove('hidden');
+            document.getElementById('dashboard-section').classList.add('hidden');
+            document.getElementById('navbar').classList.add('hidden');
+        }
+
+        // --- 🔐 AUTH LOGIC ---
+        async function handleAuth() {
+            const p = document.getElementById('password').value;
+            if (!p) return showToast("Enter password", "error");
+
+            showLoader(true, "Verifying...");
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/auth`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: p })
+                });
+
+                const data = await res.json();
+                showLoader(false);
+
+                if (res.ok && data.success) {
+                    isUnlocked = true;
+                    sessionStorage.setItem('bothost_unlocked', 'true');
+                    showToast("Access Granted!", "success");
+                    showDashboard();
+                } else {
+                    showToast(data.message || "Wrong Password", "error");
+                }
+            } catch (error) {
+                showLoader(false);
+                showToast("Connection failed", "error");
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('bothost_unlocked');
+            location.reload();
+        }
+
+        // --- 📤 UPLOAD LOGIC ---
+        function fileSelected() {
+            const file = document.getElementById('fileInput').files[0];
+            if (file) {
+                document.getElementById('file-name').innerText = file.name;
+                document.getElementById('file-display').classList.remove('hidden');
+            }
+        }
+
+        async function uploadFile(e) {
+            e.stopPropagation();
+            const file = document.getElementById('fileInput').files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('password', MASTER_PASSWORD);
+
+            showLoader(true, "Deploying to Bot Host BD...");
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                showLoader(false);
+
+                if (res.ok) {
+                    showToast("Deployed Successfully!", "success");
+                    document.getElementById('file-display').classList.add('hidden');
+                    document.getElementById('fileInput').value = "";
+                    loadApps();
+                } else {
+                    showToast(data.error, "error");
+                }
+            } catch (error) {
+                showLoader(false);
+                showToast("Upload failed", "error");
+            }
+        }
+
+        // --- 🤖 APP MANAGEMENT ---
+        async function loadApps() {
+            if (!isUnlocked) return;
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/my_apps`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: MASTER_PASSWORD })
+                });
+                const data = await res.json();
+
+                const container = document.getElementById('app-list');
+                
+                if (!data.apps || data.apps.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align:center; padding:40px; color:var(--text-muted);">
+                            <i class="fa-solid fa-box-open" style="font-size:3rem; margin-bottom:10px;"></i>
+                            <p>No bots found. Upload your first project!</p>
+                        </div>`;
+                    return;
+                }
+
+                container.innerHTML = data.apps.map(app => {
+                    const statusClass = app.running ? 'status-running' : 'status-stopped';
+                    const statusText = app.running ? 'RUNNING' : 'STOPPED';
+                    
+                    let runtimeHtml = '<i class="fa-solid fa-clock"></i> Not Active';
+                    if(app.running && app.start_time) {
+                        runtimeHtml = `<i class="fa-solid fa-clock"></i> Running for: <strong id="time-${app.name}">Calculating...</strong>`;
+                    } else if (app.running) {
+                         runtimeHtml = `<i class="fa-solid fa-clock"></i> Running...`;
+                    }
+
+                    return `
+                    <div class="app-card">
+                        <div class="app-header">
+                            <div class="app-title">
+                                <i class="fa-brands fa-python app-icon-py"></i> ${app.name}
+                            </div>
+                            <span class="status-badge ${statusClass}">
+                                <i class="fa-solid fa-circle" style="font-size:0.5rem; margin-right:5px;"></i> ${statusText}
+                            </span>
+                        </div>
+
+                        <div class="runtime-display">
+                            ${runtimeHtml}
+                        </div>
+
+                        <div class="control-panel">
+                            <button onclick="controlApp('${app.name}', 'start')" class="btn btn-primary btn-sm btn-ctrl" ${app.running ? 'disabled style="opacity:0.5"' : ''}>
+                                <i class="fa-solid fa-play"></i> Start
+                            </button>
+                            <button onclick="controlApp('${app.name}', 'stop')" class="btn btn-warning btn-sm btn-ctrl" ${!app.running ? 'disabled style="opacity:0.5"' : ''}>
+                                <i class="fa-solid fa-stop"></i> Stop
+                            </button>
+                            <button onclick="controlApp('${app.name}', 'delete')" class="btn btn-danger btn-sm btn-ctrl">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+
+                        <div class="terminal-container">
+                            <div class="terminal" id="term-${app.name}">${app.logs || '> Waiting for logs...'}</div>
+                            <button class="copy-btn" onclick="copyLogs('${app.name}')"><i class="fa-solid fa-copy"></i> Copy Logs</button>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+                
+                data.apps.forEach(app => {
+                    if(app.running && app.start_time) {
+                        startTimer(app.name, app.start_time);
+                    }
+                });
+
+            } catch (error) {
+                console.error("Failed to load apps:", error);
+                document.getElementById('app-list').innerHTML = `<div style="text-align:center; color:var(--danger-color);">Connection Error</div>`;
+            }
+        }
+
+        // --- ⏱ RUNTIME TIMER LOGIC ---
+        function startTimer(appName, startTimeStr) {
+            const startTime = new Date(startTimeStr);
+            const display = document.getElementById(`time-${appName}`);
+            
+            if(!display) return;
+
+            if(window[`timerInterval_${appName}`]) clearInterval(window[`timerInterval_${appName}`]);
+
+            window[`timerInterval_${appName}`] = setInterval(() => {
+                const now = new Date();
+                const diff = Math.floor((now - startTime) / 1000); 
+
+                const days = Math.floor(diff / (3600 * 24));
+                const hours = Math.floor((diff % (3600 * 24)) / 3600);
+                const minutes = Math.floor((diff % 3600) / 60);
+                const seconds = Math.floor(diff % 60);
+
+                let str = "";
+                if (days > 0) str += `${days}d `;
+                if (hours > 0 || days > 0) str += `${hours}h `;
+                if (minutes > 0 || hours > 0 || days > 0) str += `${minutes}m `;
+                str += `${seconds}s`;
+
+                display.innerText = str;
+            }, 1000);
+        }
+
+        // --- 📋 COPY LOGS ---
+        function copyLogs(appName) {
+            const terminal = document.getElementById(`term-${appName}`);
+            const text = terminal.innerText;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("Logs copied!", "success");
+            }).catch(err => {
+                showToast("Failed to copy", "error");
+            });
+        }
+
+        async function controlApp(appName, action) {
+            if (action === 'delete' && !confirm(`Delete "${appName}"?`)) return;
+
+            showLoader(true, `${action}ing...`);
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/action`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ app_name: appName, action: action, password: MASTER_PASSWORD })
+                });
+                const data = await res.json();
+                showLoader(false);
+
+                if (res.ok) {
+                    showToast(`Success: ${action}`, "success");
+                    loadApps();
+                } else {
+                    showToast(data.error, "error");
+                }
+            } catch (error) {
+                showLoader(false);
+                showToast("Action failed", "error");
+            }
+        }
+
+        // Auto-refresh
+        setInterval(() => {
+            if (isUnlocked) loadApps();
+        }, 10000);
+
+    </script>
+</body>
+  </html>
